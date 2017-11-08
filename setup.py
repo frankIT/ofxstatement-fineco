@@ -9,15 +9,15 @@ version = "0.0.1"
 with open('README.rst') as f:
     long_description = f.read()
 
-setup(name='ofxstatement-sample',
+setup(name='ofxstatement-fineco',
       version=version,
-      author="Andrey Lebedev",
-      author_email="andrey@lebedev.lt",
-      url="https://github.com/kedder/ofxstatement",
-      description=("Sample plugin for ofxstatement"),
+      author="Francesco Lorenzetti",
+      author_email="",
+      url="https://github.com/frankIT/ofxstatement-fineco",
+      description=("italian bank Fineco, it parses file.xls for private accounts"),
       long_description=long_description,
       license="GPLv3",
-      keywords=["ofx", "banking", "statement"],
+      keywords=["ofx", "banking", "statement", "fineco"],
       classifiers=[
           'Development Status :: 3 - Alpha',
           'Programming Language :: Python :: 3',
@@ -32,9 +32,9 @@ setup(name='ofxstatement-sample',
       namespace_packages=["ofxstatement", "ofxstatement.plugins"],
       entry_points={
           'ofxstatement':
-          ['sample = ofxstatement.plugins.sample:SamplePlugin']
+          ['fineco = ofxstatement.plugins.fineco:FinecoPlugin']
           },
-      install_requires=['ofxstatement'],
+      install_requires=['ofxstatement', 'xlrd'],
       include_package_data=True,
       zip_safe=True
       )
