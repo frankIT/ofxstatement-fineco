@@ -137,6 +137,8 @@ class FinecoStatementParser(StatementParser):
 
         stmt_line.date = datetime.strptime(row[0], self.date_format)
         stmt_line.memo = row[5]
+        # HomeBank will import payee in information field
+        stmt_line.payee = row[5]
         stmt_line.amount = self.calc_amount(income, outcome)
         stmt_line.id = statement.generate_transaction_id(stmt_line)
         return stmt_line
