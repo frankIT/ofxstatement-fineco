@@ -51,7 +51,7 @@ about the parsing
 
 The plugin support both the xls file available from Fineco: the one from your savings, and the one from your debit/credit cards.
 The debits cards top-ups logs it's not supported by purpose, since the same transactions are present in the savings statement.
-I'm not aware of other types of statement files available from Fineco bank, if you do please send me a sample file, or feel free to contribute.
+I'm not aware of other statement files available from Fineco bank, if you do please send me a sample file, or feel free to contribute.
 
 Simliar old projects
 --------------------
