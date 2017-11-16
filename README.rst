@@ -10,7 +10,7 @@ suitable for importing to `GnuCash`_ or any other standard-friendly accounting s
 
 It basically give you the freedom to use any accounting program you like,
 without the need of propretary software that is sometimes advertised by the banks,
-as the italian Fineco do with its ``"MoneyMap"`_.
+as the italian Fineco do with its `"MoneyMap"`_.
 Please also consider that the categorizing work you would probably want to do with any accounting app,
 could be precious for targeted advertising of profiling in general.
 So you might really want to doublecheck which checkbox should be thicked,
