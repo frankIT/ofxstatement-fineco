@@ -6,7 +6,7 @@ from ofxstatement.parser import StatementParser
 
 
 class FinecoPlugin(Plugin):
-    """italian bank Fineco, it parses file.xls for private accounts
+    """italian bank Fineco, it parses both xls files available for private accounts
     """
 
     def get_parser(self, filename):
@@ -14,31 +14,41 @@ class FinecoPlugin(Plugin):
 
 
 class FinecoStatementParser(StatementParser):
+
+    # HomeBank import payee/<NAME> in its description field, that can be used by assignement rules
+    memo2payee = True
     date_format = '%d/%m/%Y'
     bank_id = 'FinecoBank'
     currency = 'EUR'
-    account_id_str = 'Conto Corrente: '
-    xfer_str = 'Bonifico '
-    cash_str = 'Prelievi Bancomat '
+    tpl = {
+        'savings' : {
+            'th' : [
+                u"Data Operazione",
+                u"Data Valuta",
+                u"Entrate",
+                u"Uscite",
+                u"Descrizione",
+                u"Descrizione Completa",
+            ],
+            'account_id_str' : 'Conto Corrente: ',
+            'xfer_str' : 'Bonifico ',
+            'cash_str' : 'Prelievi Bancomat ',
+        },
+        'cards' : {
+            'th' : [
+                u"Data operazione",
+                u"Data Registrazione",
+                u"Descrizione Operazione",
+                u"Tipo spesa",
+                u"Tipo rimborso",
+                u"Importo in €",
+            ],
+            'account_id_str' : ' **** **** ',
+        }
+    }
+    common_footer_marker = 'Totale'
     th_separator_idx = 0
-    tpl_type = 'account'
-    valid_header = [
-        u"Data Operazione",
-        u"Data Valuta",
-        u"Entrate",
-        u"Uscite",
-        u"Descrizione",
-        u"Descrizione Completa",
-    ]
-    # TODO: handle both sheet template
-    valid_header_cards = [
-        u"Data operazione",
-        u"Data Registrazione",
-        u"Descrizione Operazione",
-        u"Tipo spesa",
-        u"Tipo rimborso",
-        #u"Importo in €",
-    ]
+    cur_tpl = 'savings'
 
 
     def __init__(self, filename):
@@ -56,44 +66,54 @@ class FinecoStatementParser(StatementParser):
         heading, rows = [], []
 
         # split heading from actual statement
-        for row in range(sheet.nrows):
+        for rowidx in range(sheet.nrows):
+            row = sheet.row_values(rowidx)
             if self.th_separator_idx > 0:
-                rows.append(sheet.row_values(row))
+                if row[0] != '' and not row[0].startswith(self.common_footer_marker):
+                    rows.append(row)
             else:
-                heading.append(sheet.row_values(row))
-
-            if sheet.row_values(row)[0] == self.valid_header[0]:
-                self.th_separator_idx = row
-                # guess sheet tpl type
-                if sheet.row_values(row)[1] == self.valid_header[1]:
-                    self.tpl_type = 'account'
-                elif sheet.row_values(row)[1] == self.valid_header_cards[1]:
-                    self.tpl_type = 'cards'
+                heading.append(row)
+            # guess sheet tpl type
+            for name, tpl in self.tpl.items():
+                if row[0] == tpl['th'][0]:
+                    self.th_separator_idx = rowidx
+                    self.cur_tpl = name
 
         self.validate(heading)
+
+        if self.cur_tpl == 'savings':
+            account_id = sheet.cell_value(0, 0).replace(self.tpl[self.cur_tpl]['account_id_str'], '')
+        elif self.cur_tpl == 'cards':
+            account_id = sheet.cell_value(0, 2).replace(self.tpl[self.cur_tpl]['account_id_str'], '-')
+
         self.statement = statement.Statement(
             bank_id = self.bank_id,
-            account_id = sheet.cell_value(0, 0).replace(self.account_id_str, ''),
+            account_id = account_id,
             currency = self.currency
         )
+
         self.rows = rows
         return super(FinecoStatementParser, self).parse()
 
 
     def validate(self, heading):
+        if self.th_separator_idx == 0:
+            raise ValueError('unkown file')
+
         actual_header = heading[self.th_separator_idx]
         first_cell = heading[0][0]
         msg = None
-        if self.tpl_type == 'cards':
-            msg = "Credit card statement is not supported yet"
-        elif not first_cell.startswith(self.account_id_str):
+
+        if self.cur_tpl == 'savings' and not first_cell.startswith(self.tpl[self.cur_tpl]['account_id_str']):
             msg = "No account id cell found"
-        elif self.valid_header != actual_header:
+
+        elif self.tpl[self.cur_tpl]['th'] != actual_header:
             msg = "\n".join([
                 "Header template doesn't match:",
-                "expected: %s" % self.valid_header,
+                "expected: %s" % self.tpl[self.cur_tpl]['th'],
                 "actual  : %s" % actual_header
             ])
+
         if msg:
             raise ValueError(msg)
 
@@ -120,25 +140,41 @@ class FinecoStatementParser(StatementParser):
         """
         stmt_line = statement.StatementLine()
 
-        if row[2]:
-            income = row[2]
-            outcome = 0
-            stmt_line.trntype = "CREDIT"
-        elif row[3]:
-            outcome = row[3]
-            income = 0
-            stmt_line.trntype = "DEBIT"
+        if self.cur_tpl == 'savings':
+            if row[2]:
+                income = row[2]
+                outcome = 0
+                stmt_line.trntype = "CREDIT"
+            elif row[3]:
+                outcome = row[3]
+                income = 0
+                stmt_line.trntype = "DEBIT"
 
-        memo_short = row[4]
-        if memo_short.startswith(self.xfer_str):
-            stmt_line.trntype = "XFER"
-        elif memo_short.startswith(self.cash_str):
-            stmt_line.trntype = "CASH"
+            memo_short = row[4]
+            if memo_short.startswith(self.tpl['savings']['xfer_str']):
+                stmt_line.trntype = "XFER"
+            elif memo_short.startswith(self.tpl['savings']['cash_str']):
+                stmt_line.trntype = "CASH"
+
+            stmt_line.memo = row[5]
+            stmt_line.amount = self.calc_amount(income, outcome)
+
+        elif self.cur_tpl == 'cards':
+            if row[3] == 'P':
+                stmt_line.trntype = "CASH"
+
+            if row[5] > 0:
+                stmt_line.trntype = "DEBIT"
+            else:
+                stmt_line.trntype = "CREDIT"
+
+            stmt_line.memo = row[2]
+            stmt_line.amount = row[5]
+
+        if self.memo2payee:
+            stmt_line.payee = stmt_line.memo
 
         stmt_line.date = datetime.strptime(row[0], self.date_format)
-        stmt_line.memo = row[5]
-        # HomeBank will import payee in information field
-        stmt_line.payee = row[5]
-        stmt_line.amount = self.calc_amount(income, outcome)
         stmt_line.id = statement.generate_transaction_id(stmt_line)
+
         return stmt_line
