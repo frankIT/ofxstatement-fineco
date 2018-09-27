@@ -11,13 +11,6 @@ suitable for importing to `GnuCash`_ or any other standard-friendly accounting s
 It basically give you the freedom to use any accounting program you like,
 without the need of propretary software that is sometimes advertised by the banks,
 as the italian Fineco do with its `MoneyMap`_.
-Please also consider that the categorizing work you would probably want to do with any accounting app,
-could be precious for targeted advertising of profiling in general.
-So you might really want to doublecheck which checkbox should be thicked,
-when who you share your data with will upgrade its privacy policy.
-By using your preferred accounting software instead (possibly a free/open one),
-you won't be forced in any way to share your data with anyone.
-
 
 a use case
 ----------
@@ -46,11 +39,11 @@ about the parsing
 - A semi-unique id is generated for any transaction through a ofxstatement's native method.
 - The ofx transaction type are set to generic DEBIT or CREDIT according to the in/outcome field.
 - The only other two type set are XFER and CASH, when the transaction is evaluated respectively as a bank transfer or a withrawal
-- The full description available are set to the memo field.
+- The full description available is set to the memo field.
 - Optionally the memo field could be duplicated on the payee/<NAME> one, to match a specific `HomeBank limit`_ during ofx import.
 
 The plugin support both the xls file available from Fineco: the one from your savings, and the one from your debit/credit cards.
-The debits cards top-ups logs it's not supported by purpose, since the same transactions are present in the savings statement.
+The debit card top-ups log it's not supported by purpose, since the same transactions are present in the savings statement.
 I'm not aware of other statement files available from Fineco bank, if you do please send me a sample file, or feel free to contribute.
 
 Simliar old projects
