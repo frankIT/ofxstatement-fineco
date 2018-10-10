@@ -39,9 +39,10 @@ class FinecoStatementParser(StatementParser):
                 u"Data operazione",
                 u"Data Registrazione",
                 u"Descrizione Operazione",
-                u"Tipo spesa",
-                u"Tipo rimborso",
+                #u"Tipo spesa",
+                #u"Tipo rimborso",
                 u"Importo in €",
+                u"",
             ],
             'account_id_str' : ' **** **** ',
         }
@@ -163,13 +164,13 @@ class FinecoStatementParser(StatementParser):
             if row[3] == 'P':
                 stmt_line.trntype = "CASH"
 
-            if row[5] > 0:
+            if row[4] < 0:
                 stmt_line.trntype = "DEBIT"
             else:
                 stmt_line.trntype = "CREDIT"
 
             stmt_line.memo = row[2]
-            stmt_line.amount = row[5]
+            stmt_line.amount = row[4]
 
         if self.memo2payee:
             stmt_line.payee = stmt_line.memo
