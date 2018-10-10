@@ -33,6 +33,7 @@ class FinecoStatementParser(StatementParser):
             'account_id_str' : 'Conto Corrente: ',
             'xfer_str' : 'Bonifico ',
             'cash_str' : 'Prelievi Bancomat ',
+            'extra_field' : 'Money Map',
         },
         'cards' : {
             'th' : [
@@ -50,6 +51,7 @@ class FinecoStatementParser(StatementParser):
     common_footer_marker = 'Totale'
     th_separator_idx = 0
     cur_tpl = 'savings'
+    got_extra_field = False;
 
 
     def __init__(self, filename):
@@ -79,6 +81,11 @@ class FinecoStatementParser(StatementParser):
                 if row[0] == tpl['th'][0]:
                     self.th_separator_idx = rowidx
                     self.cur_tpl = name
+
+        # check if the file got the "Money Map" extra field
+        if heading[-1][-1] == self.tpl['savings']['extra_field']:
+            self.tpl['savings']['th'].append(self.tpl['savings']['extra_field'])
+            self.got_extra_field = True
 
         self.validate(heading)
 
@@ -158,6 +165,9 @@ class FinecoStatementParser(StatementParser):
                 stmt_line.trntype = "CASH"
 
             stmt_line.memo = row[5]
+            if self.got_extra_field and row[6] != '':
+                stmt_line.memo = stmt_line.memo + ' - ' + row[6]
+
             stmt_line.amount = self.calc_amount(income, outcome)
 
         elif self.cur_tpl == 'cards':
