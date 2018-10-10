@@ -51,7 +51,7 @@ class FinecoStatementParser(StatementParser):
     common_footer_marker = 'Totale'
     th_separator_idx = 0
     cur_tpl = 'savings'
-    got_extra_field = False;
+    extra_field = False;
 
 
     def __init__(self, filename):
@@ -68,7 +68,7 @@ class FinecoStatementParser(StatementParser):
         sheet = workbook.sheet_by_index(0)
         heading, rows = [], []
 
-        # split heading from actual statement
+        # split heading from current statement
         for rowidx in range(sheet.nrows):
             row = sheet.row_values(rowidx)
             if self.th_separator_idx > 0:
@@ -76,23 +76,24 @@ class FinecoStatementParser(StatementParser):
                     rows.append(row)
             else:
                 heading.append(row)
+
             # guess sheet tpl type
             for name, tpl in self.tpl.items():
                 if row[0] == tpl['th'][0]:
                     self.th_separator_idx = rowidx
                     self.cur_tpl = name
 
-        # check if the file got the "Money Map" extra field
+        # check if the file has the "Money Map" extra field
         if heading[-1][-1] == self.tpl['savings']['extra_field']:
             self.tpl['savings']['th'].append(self.tpl['savings']['extra_field'])
-            self.got_extra_field = True
+            self.extra_field = True
 
         self.validate(heading)
 
         if self.cur_tpl == 'savings':
             account_id = sheet.cell_value(0, 0).replace(self.tpl[self.cur_tpl]['account_id_str'], '')
         elif self.cur_tpl == 'cards':
-            account_id = sheet.cell_value(0, 2).replace(self.tpl[self.cur_tpl]['account_id_str'], '-')
+            account_id = sheet.cell_value(1, 2).replace(self.tpl[self.cur_tpl]['account_id_str'], '-')
 
         self.statement = statement.Statement(
             bank_id = self.bank_id,
@@ -108,18 +109,18 @@ class FinecoStatementParser(StatementParser):
         if self.th_separator_idx == 0:
             raise ValueError('unkown file')
 
-        actual_header = heading[self.th_separator_idx]
+        current_header = heading[self.th_separator_idx]
         first_cell = heading[0][0]
         msg = None
 
         if self.cur_tpl == 'savings' and not first_cell.startswith(self.tpl[self.cur_tpl]['account_id_str']):
             msg = "No account id cell found"
 
-        elif self.tpl[self.cur_tpl]['th'] != actual_header:
+        elif self.tpl[self.cur_tpl]['th'] != current_header:
             msg = "\n".join([
                 "Header template doesn't match:",
                 "expected: %s" % self.tpl[self.cur_tpl]['th'],
-                "actual  : %s" % actual_header
+                "current  : %s" % current_header
             ])
 
         if msg:
@@ -165,7 +166,7 @@ class FinecoStatementParser(StatementParser):
                 stmt_line.trntype = "CASH"
 
             stmt_line.memo = row[5]
-            if self.got_extra_field and row[6] != '':
+            if self.extra_field and row[6] != '':
                 stmt_line.memo = stmt_line.memo + ' - ' + row[6]
 
             stmt_line.amount = self.calc_amount(income, outcome)
