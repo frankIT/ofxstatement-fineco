@@ -40,11 +40,12 @@ class FinecoStatementParser(StatementParser):
                 u"Data operazione",
                 u"Data Registrazione",
                 u"Descrizione Operazione",
-                #u"Tipo spesa",
-                #u"Tipo rimborso",
+                u"Tipo spesa",
+                u"Tipo rimborso",
                 u"Importo in €",
-                u"",
             ],
+            'th_row' : 0,
+            'amount_field' : 5,
             'account_id_str' : ' **** **** ',
         }
     }
@@ -83,17 +84,25 @@ class FinecoStatementParser(StatementParser):
                     self.th_separator_idx = rowidx
                     self.cur_tpl = name
 
-        # check if the file has the "Money Map" extra field
-        if heading[-1][-1] == self.tpl['savings']['extra_field']:
+        # issue #1: check if the file has the "Money Map" extra field
+        if self.cur_tpl == 'savings' and heading[-1][-1] == self.tpl['savings']['extra_field']:
             self.tpl['savings']['th'].append(self.tpl['savings']['extra_field'])
             self.extra_field = True
+
+        # issue #2: some cards statements could miss "Tipo Spesa" and "Tipo Rimborso" columns
+        elif self.cur_tpl == 'cards' and heading[-1][3] == self.tpl['cards']['th'][5]:
+            self.tpl['cards']['th'].remove("Tipo spesa")
+            self.tpl['cards']['th'].remove("Tipo rimborso")
+            self.tpl['cards']['th'].append("")
+            self.tpl['cards']['th_row'] = 1
+            self.tpl['cards']['amount_field'] = 4
 
         self.validate(heading)
 
         if self.cur_tpl == 'savings':
             account_id = sheet.cell_value(0, 0).replace(self.tpl[self.cur_tpl]['account_id_str'], '')
         elif self.cur_tpl == 'cards':
-            account_id = sheet.cell_value(1, 2).replace(self.tpl[self.cur_tpl]['account_id_str'], '-')
+            account_id = sheet.cell_value(self.tpl['cards']['th_row'], 2).replace(self.tpl[self.cur_tpl]['account_id_str'], '-')
 
         self.statement = statement.Statement(
             bank_id = self.bank_id,
@@ -175,13 +184,13 @@ class FinecoStatementParser(StatementParser):
             if row[3] == 'P':
                 stmt_line.trntype = "CASH"
 
-            if row[4] < 0:
+            if row[ self.tpl['cards']['amount_field'] ] < 0:
                 stmt_line.trntype = "DEBIT"
             else:
                 stmt_line.trntype = "CREDIT"
 
             stmt_line.memo = row[2]
-            stmt_line.amount = row[4]
+            stmt_line.amount = row[ self.tpl['cards']['amount_field'] ]
 
         if self.memo2payee:
             stmt_line.payee = stmt_line.memo
