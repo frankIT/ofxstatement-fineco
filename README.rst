@@ -27,12 +27,10 @@ how
 
 install
 -------
-I still not packetized for pip, so you still have to
 
 ::
 
-    $ git clone https://github.com/frankIT/ofxstatement-fineco.git fineco
-    $ cd fineco && python setup.py develop
+    $ pip3 install ofxstatement-fineco
 
 about the parsing
 -----------------
@@ -41,7 +39,7 @@ about the parsing
 - The only other two type set are XFER and CASH, when the transaction is evaluated respectively as a bank transfer or a withrawal
 - The full description available is set to the memo field.
 - Optionally the memo field could be duplicated on the payee/<NAME> one, to match a specific `HomeBank limit`_ during ofx import.
-- The "Money Map" coulum, if found, will be appended to the memo field.  
+- The "Money Map" coulum, if found in the savings statement, will be appended to the memo field.
 
 The plugin support both the xls file available from Fineco: the one from your savings, and the one from your debit/credit cards.
 The debit card top-ups log it's not supported by purpose, since the same transactions are present in the savings statement.
