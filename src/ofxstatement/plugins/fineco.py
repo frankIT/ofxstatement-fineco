@@ -1,5 +1,4 @@
 import xlrd
-import logging
 from datetime import datetime
 from ofxstatement import statement
 from ofxstatement.plugin import Plugin
@@ -163,7 +162,6 @@ class FinecoStatementParser(StatementParser):
     def parse_record(self, row):
         """Parse given transaction line and return StatementLine object
         """
-        #logging.info('::ROW', row)
         stmt_line = statement.StatementLine()
 
         if self.cur_tpl == 'savings':
