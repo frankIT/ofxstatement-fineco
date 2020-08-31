@@ -73,7 +73,7 @@ class FinecoStatementParser(StatementParser):
         for rowidx in range(sheet.nrows):
             row = sheet.row_values(rowidx)
             if self.th_separator_idx > 0:
-                if row[0] != '' and not row[0].startswith(self.common_footer_marker):
+                if row[0] != '' and not str(row[0]).startswith(self.common_footer_marker):
                     rows.append(row)
             else:
                 heading.append(row)
@@ -152,6 +152,12 @@ class FinecoStatementParser(StatementParser):
         for row in self.rows:
             yield row
 
+ 
+    def xls_date(self,excel_serial_date):
+        excel_date = int(excel_serial_date)
+        dt = datetime.fromordinal(datetime(1900, 1, 1).toordinal() + excel_date - 2)
+        tt = dt.timetuple()
+        return dt
 
     def parse_record(self, row):
         """Parse given transaction line and return StatementLine object
@@ -195,7 +201,7 @@ class FinecoStatementParser(StatementParser):
         if self.memo2payee:
             stmt_line.payee = stmt_line.memo
 
-        stmt_line.date = datetime.strptime(row[0], self.date_format)
+        stmt_line.date = self.xls_date(int(row[0]))
         stmt_line.id = statement.generate_transaction_id(stmt_line)
 
         return stmt_line
