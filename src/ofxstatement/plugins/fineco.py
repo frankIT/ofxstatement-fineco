@@ -33,7 +33,7 @@ class FinecoStatementParser(StatementParser):
             'account_id_str' : 'Conto Corrente: ',
             'xfer_str' : 'Bonifico ',
             'cash_str' : 'Prelievi Bancomat ',
-            'extra_field' : 'Money Map',
+            'extra_field' : 'Moneymap',
         },
         'savings_legacy' : {
             'th' : [
