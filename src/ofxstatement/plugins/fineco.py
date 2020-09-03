@@ -23,6 +23,20 @@ class FinecoStatementParser(StatementParser):
     tpl = {
         'savings' : {
             'th' : [
+                u"Data",
+                u"Entrate",
+                u"Uscite",
+                u"Descrizione",
+                u"Descrizione Completa",
+                u"Stato",
+            ],
+            'account_id_str' : 'Conto Corrente: ',
+            'xfer_str' : 'Bonifico ',
+            'cash_str' : 'Prelievi Bancomat ',
+            'extra_field' : 'Money Map',
+        },
+        'savings_legacy' : {
+            'th' : [
                 u"Data Operazione",
                 u"Data Valuta",
                 u"Entrate",
