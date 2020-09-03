@@ -104,8 +104,8 @@ class FinecoStatementParser(StatementParser):
                     self.cur_tpl = name
 
         # issue #1: check if the file has the "Money Map" extra field
-        if self.cur_tpl == 'savings' and heading[-1][-1] == self.tpl['savings']['extra_field']:
-            self.tpl['savings']['th'].append(self.tpl['savings']['extra_field'])
+        if 'extra_field' in self.tpl[self.cur_tpl] and heading[-1][-1] == self.tpl[self.cur_tpl]['extra_field']:
+            self.tpl[self.cur_tpl]['th'].append(self.tpl[self.cur_tpl]['extra_field'])
             self.extra_field = True
 
         # issue #2: some cards statements could miss "Tipo Spesa" and "Tipo Rimborso" columns
