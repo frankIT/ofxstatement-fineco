@@ -138,10 +138,10 @@ class FinecoStatementParser(StatementParser):
             raise ValueError('unkown file')
 
         current_header = heading[self.th_separator_idx]
-        first_cell = heading[0][0]
+        account_id_cell = 0 if self.cur_tpl == 'savings_legacy' else 1 if self.cur_tpl == 'savings' else None
         msg = None
-
-        if self.cur_tpl == 'savings' and not first_cell.startswith(self.tpl[self.cur_tpl]['account_id_str']):
+        # once savings_legacy will be dropped, there will be no need to store account_id_cell at all. just heading[1][0]
+        if self.cur_tpl != 'cards' and not heading[account_id_cell][0].startswith(self.tpl[self.cur_tpl]['account_id_str']):
             msg = "No account id cell found"
 
         elif self.tpl[self.cur_tpl]['th'] != current_header:
