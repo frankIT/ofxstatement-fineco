@@ -157,12 +157,12 @@ class FinecoStatementParser(StatementParser):
         if msg:
             raise ValueError(msg)
 
-
+    # returns a negative number as outcome or a positive one as income
     def calc_amount(self, income, outcome):
-        assert (income > 0) ^ (outcome > 0)
+        assert (income > 0) ^ (outcome != 0)
         if income > 0:
             return income
-        elif outcome > 0:
+        elif outcome != 0:
             return -1 * outcome
         else:
             return 0.0
