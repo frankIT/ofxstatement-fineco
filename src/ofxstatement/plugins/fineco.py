@@ -30,6 +30,7 @@ class FinecoStatementParser(StatementParser):
                 u"Descrizione Completa",
                 u"Stato",
             ],
+            'account_id_pos' : [1, 0],
             'account_id_str' : 'Conto Corrente: ',
             'xfer_str' : 'Bonifico ',
             'cash_str' : 'Prelievi Bancomat ',
@@ -44,6 +45,7 @@ class FinecoStatementParser(StatementParser):
                 u"Descrizione",
                 u"Descrizione Completa",
             ],
+            'account_id_pos' : [0, 0],
             'account_id_str' : 'Conto Corrente: ',
             'xfer_str' : 'Bonifico ',
             'cash_str' : 'Prelievi Bancomat ',
@@ -60,6 +62,7 @@ class FinecoStatementParser(StatementParser):
             ],
             'th_row' : 0,
             'amount_field' : 5,
+            'account_id_pos' : [1, 2],
             'account_id_str' : ' **** **** ',
         }
     }
@@ -118,10 +121,9 @@ class FinecoStatementParser(StatementParser):
 
         self.validate(heading)
 
-        if self.cur_tpl == 'savings':
-            account_id = sheet.cell_value(0, 0).replace(self.tpl[self.cur_tpl]['account_id_str'], '')
-        elif self.cur_tpl == 'cards':
-            account_id = sheet.cell_value(self.tpl['cards']['th_row'], 2).replace(self.tpl[self.cur_tpl]['account_id_str'], '-')
+        row = self.tpl[self.cur_tpl]['account_id_pos'][0]
+        col = self.tpl[self.cur_tpl]['account_id_pos'][1]
+        account_id = sheet.cell_value(row, col).replace(self.tpl[self.cur_tpl]['account_id_str'], '')
 
         self.statement = statement.Statement(
             bank_id = self.bank_id,
@@ -138,10 +140,11 @@ class FinecoStatementParser(StatementParser):
             raise ValueError('unkown file')
 
         current_header = heading[self.th_separator_idx]
-        account_id_cell = 0 if self.cur_tpl == 'savings_legacy' else 1 if self.cur_tpl == 'savings' else None
         msg = None
-        # once savings_legacy will be dropped, there will be no need to store account_id_cell at all. just heading[1][0]
-        if self.cur_tpl != 'cards' and not heading[account_id_cell][0].startswith(self.tpl[self.cur_tpl]['account_id_str']):
+
+        row = self.tpl[self.cur_tpl]['account_id_pos'][0]
+        col = self.tpl[self.cur_tpl]['account_id_pos'][1]
+        if self.cur_tpl != 'cards' and not heading[row][col].startswith(self.tpl[self.cur_tpl]['account_id_str']):
             msg = "No account id cell found"
 
         elif self.tpl[self.cur_tpl]['th'] != current_header:
