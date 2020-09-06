@@ -36,6 +36,7 @@ class FinecoStatementParser(StatementParser):
             'cash_str' : 'Prelievi Bancomat ',
             'extra_field' : 'Moneymap',
         },
+        # this will be dropped as soon as it will not be available to download
         'savings_legacy' : {
             'th' : [
                 u"Data Operazione",
