@@ -180,23 +180,24 @@ class FinecoStatementParser(StatementParser):
         """
         stmt_line = statement.StatementLine()
 
-        if self.cur_tpl == 'savings':
-            if row[1]:
-                income = row[1]
+        if self.cur_tpl == 'savings' or 'savings_legacy':
+            col_shift = 1 if self.cur_tpl == 'savings_legacy' else 0
+            if row[1+col_shift]:
+                income = row[1+col_shift]
                 outcome = 0
                 stmt_line.trntype = "CREDIT"
-            elif row[2]:
-                outcome = row[2]
+            elif row[2+col_shift]:
+                outcome = row[2+col_shift]
                 income = 0
                 stmt_line.trntype = "DEBIT"
 
-            memo_short = row[3]
+            memo_short = row[3+col_shift]
             if memo_short.startswith(self.tpl['savings']['xfer_str']):
                 stmt_line.trntype = "XFER"
             elif memo_short.startswith(self.tpl['savings']['cash_str']):
                 stmt_line.trntype = "CASH"
 
-            stmt_line.memo = row[4]
+            stmt_line.memo = row[4+col_shift]
             if self.extra_field and row[6] != '':
                 stmt_line.memo = stmt_line.memo + ' - ' + row[6]
 
