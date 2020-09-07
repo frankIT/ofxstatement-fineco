@@ -55,11 +55,11 @@ class FinecoStatementParser(StatementParser):
         'cards' : {
             'th' : [
                 u"Data operazione",
-                u"Data Registrazione",
-                u"Descrizione Operazione",
+                u"Data registrazione",
+                u"Descrizione",
                 u"Tipo spesa",
                 u"Tipo rimborso",
-                u"Importo in €",
+                u"Importo in EUR",
             ],
             'th_row' : 0,
             'amount_field' : 5,
@@ -87,7 +87,6 @@ class FinecoStatementParser(StatementParser):
         sheet = workbook.sheet_by_index(0)
         heading, rows = [], []
 
-        # split heading from current statement
         for rowidx in range(sheet.nrows):
             row = sheet.row_values(rowidx)
 
@@ -95,6 +94,7 @@ class FinecoStatementParser(StatementParser):
             if type(row[0]) is float:
                 row[0] = datetime.strftime(xlrd.xldate_as_datetime(row[0], 0), self.date_format)
 
+            # split heading from current statement
             if self.th_separator_idx > 0:
                 if row[0] != '' and not row[0].startswith(self.common_footer_marker):
                     rows.append(row)
@@ -157,6 +157,7 @@ class FinecoStatementParser(StatementParser):
 
         if msg:
             raise ValueError(msg)
+
 
     # returns a negative number as outcome or a positive one as income
     def calc_amount(self, income, outcome):
