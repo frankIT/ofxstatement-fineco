@@ -181,7 +181,7 @@ class FinecoStatementParser(StatementParser):
         """
         stmt_line = statement.StatementLine()
 
-        if self.cur_tpl == 'savings' or 'savings_legacy':
+        if self.cur_tpl == 'savings' or self.cur_tpl == 'savings_legacy':
             col_shift = 1 if self.cur_tpl == 'savings_legacy' else 0
             if row[1+col_shift]:
                 income = row[1+col_shift]
