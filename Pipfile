@@ -1,0 +1,16 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+mypy = "*"
+pytest = "*"
+black = "*"
+
+[packages]
+ofxstatement = "*"
+ofxstatement-sample = {editable = true,path = "."}
+
+[pipenv]
+allow_prereleases = true

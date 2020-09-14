@@ -19,19 +19,18 @@ your own plugin.
 Setting up development environment
 ==================================
 
-It is recommended to use ``virtualenv`` make a clean development environment.
+It is recommended to use ``pipenv`` to make a clean development environment.
 Setting up dev environment for writing a plugin is easy::
 
   $ git clone https://github.com/kedder/ofxstatement-sample ofxstatement-yourbank
   $ cd ofxstatement-yourbank
-  $ virtualenv -p python3 --no-site-packages .venv
-  $ . .venv/bin/activate
-  (.venv)$ python setup.py develop
+  $ pipenv sync --dev
+  $ pipenv shell
 
 This will download all the dependencies and install them into your virtual
 environment. After this, you should be able to do::
 
-  (.venv)$ ofxstatement list-plugins
+  $ ofxstatement list-plugins
   The following plugins are available:
 
     sample           Sample plugin (for developers only)

@@ -1,7 +1,17 @@
-PYTHON=.venv/bin/python
+all: test mypy black
 
-all: PYTHON
+PHONY: test
+test:
+	pytest
 
-PYTHON: setup.py
-	virtualenv -p python3 --no-site-packages .venv
-	$(PYTHON) setup.py develop
+PHONY: coverage
+coverage: bin/pytest
+	pytest --cov src/ofxstatement
+
+.PHONY: black
+black:
+	black setup.py src tests
+
+.PHONY: mypy
+mypy:
+	mypy src tests
