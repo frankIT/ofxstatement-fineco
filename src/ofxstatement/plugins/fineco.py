@@ -61,7 +61,6 @@ class FinecoStatementParser(StatementParser):
                 u"Tipo rimborso",
                 u"Importo in EUR",
             ],
-            'th_row' : 0,
             'amount_field' : 5,
             'account_id_pos' : [1, 2],
             'account_id_str' : ' **** **** ',
@@ -117,7 +116,6 @@ class FinecoStatementParser(StatementParser):
             self.tpl['cards']['th'].remove("Tipo spesa")
             self.tpl['cards']['th'].remove("Tipo rimborso")
             self.tpl['cards']['th'].append("")
-            self.tpl['cards']['th_row'] = 1
             self.tpl['cards']['amount_field'] = 4
 
         self.validate(heading)
