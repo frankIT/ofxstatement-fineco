@@ -112,7 +112,7 @@ class FinecoStatementParser(StatementParser):
             self.extra_field = True
 
         # issue #2: some cards statements could miss "Tipo Spesa" and "Tipo Rimborso" columns
-        elif self.cur_tpl == 'cards' and heading[-1][3] == self.tpl['cards']['th'][5]:
+        if self.cur_tpl == 'cards' and heading[-1][3] == self.tpl['cards']['th'][5]:
             self.tpl['cards']['th'].remove("Tipo spesa")
             self.tpl['cards']['th'].remove("Tipo rimborso")
             self.tpl['cards']['th'].append("")
