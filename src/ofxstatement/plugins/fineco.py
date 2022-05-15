@@ -1,19 +1,21 @@
+from typing import Iterable
+
 import xlrd
 from datetime import datetime
 from ofxstatement import statement
 from ofxstatement.plugin import Plugin
 from ofxstatement.parser import StatementParser
+# from ofxstatement.statement import Statement, StatementLine
 
 
 class FinecoPlugin(Plugin):
-    """italian bank Fineco, it parses both xls files available for private accounts
-    """
+    """italian bank Fineco, it parses both xls files available for private accounts"""
 
-    def get_parser(self, filename):
+    def get_parser(self, filename: str) -> "FinecoStatementParser":
         return FinecoStatementParser(filename)
 
 
-class FinecoStatementParser(StatementParser):
+class FinecoStatementParser(StatementParser[str]):
 
     # HomeBank import payee/<NAME> in its description field, that can be used by assignement rules
     memo2payee = True
@@ -72,11 +74,12 @@ class FinecoStatementParser(StatementParser):
     extra_field = False;
 
 
-    def __init__(self, filename):
+    def __init__(self, filename: str) -> None:
+        super().__init__()
         self.filename = filename
 
 
-    def parse(self):
+    def parse(self) -> statement.Statement:
         """Main entry point for parsers
 
         super() implementation will call to split_records and parse_record to
@@ -131,7 +134,7 @@ class FinecoStatementParser(StatementParser):
         )
 
         self.rows = rows
-        return super(FinecoStatementParser, self).parse()
+        return super().parse()
 
 
     def validate(self, heading):
@@ -168,16 +171,14 @@ class FinecoStatementParser(StatementParser):
             return 0.0
 
 
-    def split_records(self):
-        """Return iterable object consisting of a line per transaction
-        """
+    def split_records(self) -> Iterable[str]:
+        """Return iterable object consisting of a line per transaction"""
         for row in self.rows:
             yield row
 
 
-    def parse_record(self, row):
-        """Parse given transaction line and return StatementLine object
-        """
+    def parse_record(self, row: str) -> statement.StatementLine:
+        """Parse given transaction line and return StatementLine object"""
         stmt_line = statement.StatementLine()
 
         if self.cur_tpl == 'savings' or self.cur_tpl == 'savings_legacy':
