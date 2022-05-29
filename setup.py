@@ -34,7 +34,7 @@ setup(name='ofxstatement-fineco',
           'ofxstatement':
           ['fineco = ofxstatement.plugins.fineco:FinecoPlugin']
           },
-      install_requires=['ofxstatement', 'xlrd'],
+      install_requires=['ofxstatement', 'xlrd<=1.2.0'],
       include_package_data=True,
       zip_safe=True
       )
