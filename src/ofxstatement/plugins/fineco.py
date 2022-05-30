@@ -198,7 +198,7 @@ class FinecoStatementParser(StatementParser[str]):
             elif memo_short.startswith(self.tpl['savings']['cash_str']):
                 stmt_line.trntype = "CASH"
 
-            stmt_line.memo = row[4+col_shift]
+            stmt_line.memo = row[4+col_shift].replace("N°", "N.")
             if self.extra_field and row[6] != '':
                 stmt_line.memo = stmt_line.memo + ' - ' + row[6]
 
