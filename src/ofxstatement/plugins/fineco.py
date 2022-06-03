@@ -162,11 +162,18 @@ class FinecoStatementParser(StatementParser[str]):
 
     # returns a negative number as outcome or a positive one as income
     def calc_amount(self, income, outcome):
-        assert (income > 0) ^ (outcome != 0)
+        # in/outcome has to be both positive values for this logic to work
+        # turn them into positive numbers if they're not already
+        if income < 0:
+            income = -1 * outcome
+        if outcome < 0:
+            outcome = -1 * outcome
+        # only one of the two fields has to be valorized
+        assert (income > 0) ^ (outcome > 0)
         if income > 0:
             return income
-        elif outcome != 0:
-            return -1 * outcome
+        elif outcome > 0:
+            return -1 * outcome # turn outcome into a negative number
         else:
             return 0.0
 
