@@ -56,15 +56,19 @@ class FinecoStatementParser(StatementParser[str]):
         },
         'cards' : {
             'th' : [
+                u"Intestatario carta",
+                u"Numero carta",
                 u"Data operazione",
                 u"Data registrazione",
                 u"Descrizione",
-                u"Tipo spesa",
+                u"Stato operazione",
+                u"Tipo operazione",
+                u"Circuito",
                 u"Tipo rimborso",
-                u"Importo in EUR",
+                u"Importo",
             ],
-            'amount_field' : 5,
-            'account_id_pos' : [1, 2],
+            'amount_field' : 9,
+            'account_id_pos' : [3, 2],
             'account_id_str' : ' **** **** ',
         }
     }
@@ -88,13 +92,24 @@ class FinecoStatementParser(StatementParser[str]):
         workbook = xlrd.open_workbook(self.filename)
         sheet = workbook.sheet_by_index(0)
         heading, rows = [], []
+        first_col = sheet.col_values(0)
+
+        first_col_empty = True
+        for cell in first_col:
+            if cell != "":
+                first_col_empty = False
 
         for rowidx in range(sheet.nrows):
-            row = sheet.row_values(rowidx)
+            if first_col_empty:
+                row = sheet.row_values(rowidx, 1)
+            else:
+                row = sheet.row_values(rowidx)
 
             # issue #5 and #3: dates might be formatted as excel dates (floats) rather than strings
-            if type(row[0]) is float:
+            if type(row[0]) is float: # savings tpl
                 row[0] = datetime.strftime(xlrd.xldate_as_datetime(row[0], 0), self.date_format)
+            if first_col_empty and type(row[2]) is float: # cards tpl
+                row[2] = datetime.strftime(xlrd.xldate_as_datetime(row[2], 0), self.date_format)
 
             # split heading from current statement
             if self.th_separator_idx > 0:
@@ -210,6 +225,7 @@ class FinecoStatementParser(StatementParser[str]):
                 stmt_line.memo = stmt_line.memo + ' - ' + row[6]
 
             stmt_line.amount = self.calc_amount(income, outcome)
+            stmt_line.date = datetime.strptime(row[0], self.date_format)
 
         elif self.cur_tpl == 'cards':
             if row[3] == 'P':
@@ -220,13 +236,13 @@ class FinecoStatementParser(StatementParser[str]):
             else:
                 stmt_line.trntype = "CREDIT"
 
-            stmt_line.memo = row[2]
+            stmt_line.memo = row[4]
             stmt_line.amount = row[ self.tpl['cards']['amount_field'] ]
+            stmt_line.date = datetime.strptime(row[2], self.date_format)
 
         if self.memo2payee:
             stmt_line.payee = stmt_line.memo
 
-        stmt_line.date = datetime.strptime(row[0], self.date_format)
         stmt_line.id = statement.generate_transaction_id(stmt_line)
 
         return stmt_line
