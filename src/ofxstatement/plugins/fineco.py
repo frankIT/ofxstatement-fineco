@@ -236,7 +236,7 @@ class FinecoStatementParser(StatementParser[str]):
             else:
                 stmt_line.trntype = "CREDIT"
 
-            stmt_line.memo = row[4]
+            stmt_line.memo = row[4].replace("°", ".")
             stmt_line.amount = row[ self.tpl['cards']['amount_field'] ]
             stmt_line.date = datetime.strptime(row[2], self.date_format)
 
