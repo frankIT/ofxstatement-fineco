@@ -15,3 +15,8 @@ black:
 .PHONY: mypy
 mypy:
 	mypy src tests
+
+publish:
+	rm -f dist/*
+	python3 -m build
+	python3 -m twine upload dist/* --verbose
