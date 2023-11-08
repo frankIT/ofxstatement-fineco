@@ -89,6 +89,12 @@ class FinecoStatementParser(StatementParser[str]):
         super() implementation will call to split_records and parse_record to
         process the file.
         """
+        
+        # This is required when running Python >= 3.9
+        # see https://stackoverflow.com/a/65131301/2375321
+        xlrd.xlsx.ensure_elementtree_imported(False, None)
+        xlrd.xlsx.Element_has_iter = True
+
         workbook = xlrd.open_workbook(self.filename)
         sheet = workbook.sheet_by_index(0)
         heading, rows = [], []
