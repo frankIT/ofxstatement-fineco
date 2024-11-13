@@ -12,6 +12,7 @@ black = "*"
 ofxstatement = "*"
 ofxstatement-sample = {editable = true,path = "."}
 xlrd = "<=1.2.0"
+setuptools = "*"
 
 [pipenv]
 allow_prereleases = true
