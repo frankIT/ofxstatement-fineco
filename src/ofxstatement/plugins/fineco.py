@@ -31,6 +31,7 @@ class FinecoStatementParser(StatementParser[str]):
                 u"Descrizione",
                 u"Descrizione_Completa",
                 u"Stato",
+                u"",
             ],
             'account_id_pos' : [0, 0],
             'account_id_str' : 'Conto Corrente: ',
@@ -167,8 +168,8 @@ class FinecoStatementParser(StatementParser[str]):
         elif self.tpl[self.cur_tpl]['th'] != current_header:
             msg = "\n".join([
                 "Header template doesn't match:",
-                "expected: %s" % self.tpl[self.cur_tpl]['th'],
-                "current  : %s" % current_header
+                "expected:  %s" % self.tpl[self.cur_tpl]['th'],
+                "current:   %s" % current_header
             ])
 
         if msg:
