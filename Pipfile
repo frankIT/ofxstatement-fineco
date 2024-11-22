@@ -7,10 +7,14 @@ verify_ssl = true
 mypy = "*"
 pytest = "*"
 black = "*"
+exceptiongroup = "*"
+build = "*"
+tomli = "*"
+xlrd = "<=1.2.0"
 
 [packages]
 ofxstatement = "*"
-ofxstatement-sample = {editable = true,path = "."}
+ofxstatement-fineco = {editable = true,path = "."}
 xlrd = "<=1.2.0"
 setuptools = "*"
 
