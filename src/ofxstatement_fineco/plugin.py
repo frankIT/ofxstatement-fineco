@@ -31,29 +31,12 @@ class FinecoStatementParser(StatementParser[str]):
                 u"Descrizione",
                 u"Descrizione_Completa",
                 u"Stato",
-                u"",
             ],
             'account_id_pos' : [0, 0],
             'account_id_str' : 'Conto Corrente: ',
             'xfer_str' : 'Bonifico ',
             'cash_str' : 'Prelievo Bancomat',
             'extra_field' : 'Moneymap',
-        },
-        # this will be dropped as soon as it will not be available to download
-        'savings_legacy' : {
-            'th' : [
-                u"Data Operazione",
-                u"Data Valuta",
-                u"Entrate",
-                u"Uscite",
-                u"Descrizione",
-                u"Descrizione Completa",
-            ],
-            'account_id_pos' : [0, 0],
-            'account_id_str' : 'Conto Corrente: ',
-            'xfer_str' : 'Bonifico ',
-            'cash_str' : 'Prelievi Bancomat ',
-            'extra_field' : 'Money Map',
         },
         'cards' : {
             'th' : [
@@ -158,6 +141,11 @@ class FinecoStatementParser(StatementParser[str]):
             raise ValueError('unkown file')
 
         current_header = heading[self.th_separator_idx]
+
+        # Check and remove empty last column if present
+        if current_header and current_header[-1] == '':
+            current_header = current_header[:-1]
+
         msg = None
 
         row = self.tpl[self.cur_tpl]['account_id_pos'][0]
