@@ -94,17 +94,27 @@ class FinecoStatementParser(StatementParser[str]):
         sheet = workbook.sheet_by_index(0)
         heading, rows = [], []
         first_col = sheet.col_values(0)
+        last_col = sheet.col_values(6) # This hardcoded 6 could cause issues for other file variants
 
         first_col_empty = True
         for cell in first_col:
             if cell != "":
                 first_col_empty = False
+                break
+
+        last_col_empty = True
+        for cell in last_col:
+            if cell != "":
+                last_col_empty = False
+                break
 
         for rowidx in range(sheet.nrows):
+            start_colx = 0
             if first_col_empty:
-                row = sheet.row_values(rowidx, 1)
-            else:
-                row = sheet.row_values(rowidx)
+                start_colx = 1
+            if last_col_empty:
+                end_colx = 6
+            row = sheet.row_values(rowidx, start_colx, end_colx)
 
             # issue #5 and #3: dates might be formatted as excel dates (floats) rather than strings
             if type(row[0]) is float: # savings tpl
