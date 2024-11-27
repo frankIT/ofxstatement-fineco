@@ -10,7 +10,7 @@ coverage: bin/pytest
 
 .PHONY: black
 black:
-	black setup.py src tests
+	black --check src tests
 
 .PHONY: mypy
 mypy:
