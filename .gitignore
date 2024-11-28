@@ -9,5 +9,7 @@ eggs
 .venv
 .project
 .pydevproject
-*.sublime*
+.vscode/*
 exports/
+tests/.~lock.my-cards.xls#
+tests/.~lock.movements.xlsx#
