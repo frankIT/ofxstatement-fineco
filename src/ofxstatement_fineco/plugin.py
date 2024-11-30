@@ -1,8 +1,10 @@
 from typing import Iterable
+import json, os
+from pathlib import Path
 
-import xlrd
+import xlrd  # type: ignore
 from datetime import datetime
-from ofxstatement import statement
+from ofxstatement import statement, configuration
 from ofxstatement.plugin import Plugin
 from ofxstatement.parser import StatementParser
 
@@ -12,52 +14,60 @@ from ofxstatement.parser import StatementParser
 class FinecoPlugin(Plugin):
     """italian bank Fineco, it parses both xls files available for private accounts"""
 
+    defaultsPath = os.path.join(Path(__file__).parent, "config", "defaults.ini")
+
+    def config_parser(self, parser: "FinecoStatementParser") -> "FinecoStatementParser":
+        """Configure parser with current settings or with those from defaults.ini"""
+
+        defaults = configuration.read(self.defaultsPath)
+        if not defaults:
+            return parser
+
+        parser.tpl = {"savings": {}, "cards": {}}
+
+        for option in defaults.options("fineco"):
+            if option == "plugin":
+                continue
+
+            default_value = defaults.get("fineco", option)
+
+            # Handle dotted notation for templates
+            if option.startswith(("savings.", "cards.")):
+                section, key = option.split(".", 1)
+                value = self.settings.get(option, default_value)
+
+                if value.startswith("["):
+                    parser.tpl[section][key] = json.loads(value)
+                else:
+                    parser.tpl[section][key] = (
+                        int(value)
+                        if str(value).isdigit()
+                        else (value.strip('"') if value.startswith('"') else value)
+                    )
+            else:
+                # Handle basic settings
+                value = self.settings.get(option, default_value)
+                if value.startswith("["):
+                    parsed_value = json.loads(value)
+                elif value.lower() in ("true", "false"):
+                    parsed_value = value.lower() == "true"
+                else:
+                    parsed_value = (
+                        int(value)
+                        if str(value).isdigit()
+                        else (value.strip('"') if value.startswith('"') else value)
+                    )
+
+                setattr(parser, option, parsed_value)
+
+        return parser
+
     def get_parser(self, filename: str) -> "FinecoStatementParser":
-        return FinecoStatementParser(filename)
+        return self.config_parser(FinecoStatementParser(filename))
 
 
 class FinecoStatementParser(StatementParser[str]):
 
-    # HomeBank import payee/<NAME> in its description field, that can be used by assignement rules
-    memo2payee = True
-    date_format = "%d/%m/%Y"
-    bank_id = "FinecoBank"
-    currency = "EUR"
-    tpl = {
-        "savings": {
-            "th": [
-                "Data",
-                "Entrate",
-                "Uscite",
-                "Descrizione",
-                "Descrizione_Completa",
-                "Stato",
-            ],
-            "account_id_pos": [0, 0],
-            "account_id_str": "Conto Corrente: ",
-            "xfer_str": "Bonifico ",
-            "cash_str": "Prelievo Bancomat",
-            "extra_field": "Moneymap",
-        },
-        "cards": {
-            "th": [
-                "Intestatario carta",
-                "Numero carta",
-                "Data operazione",
-                "Data registrazione",
-                "Descrizione",
-                "Stato operazione",
-                "Tipo operazione",
-                "Circuito",
-                "Tipo rimborso",
-                "Importo",
-            ],
-            "amount_field": 9,
-            "account_id_pos": [3, 2],
-            "account_id_str": " **** **** ",
-        },
-    }
-    common_footer_marker = "Totale"
     th_separator_idx = 0
     cur_tpl = "savings"
     extra_field = False
@@ -199,8 +209,8 @@ class FinecoStatementParser(StatementParser[str]):
         """Parse given transaction line and return StatementLine object"""
         stmt_line = statement.StatementLine()
 
-        if self.cur_tpl == "savings" or self.cur_tpl == "savings_legacy":
-            col_shift = 1 if self.cur_tpl == "savings_legacy" else 0
+        if self.cur_tpl == "savings":
+            col_shift = 0
             if row[1 + col_shift]:
                 income = row[1 + col_shift]
                 outcome = 0
