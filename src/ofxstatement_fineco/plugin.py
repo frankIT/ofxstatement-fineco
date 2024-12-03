@@ -1,70 +1,95 @@
-from typing import Iterable
-
-import xlrd
+import xlrd, json, os  # type: ignore
+from typing import Iterable, TypedDict
+from pathlib import Path
 from datetime import datetime
-from ofxstatement import statement
+from ofxstatement import statement, configuration
 from ofxstatement.plugin import Plugin
 from ofxstatement.parser import StatementParser
 
-# from ofxstatement.statement import Statement, StatementLine
+
+class TemplateDict(TypedDict):
+    savings: dict
+    cards: dict
 
 
 class FinecoPlugin(Plugin):
     """italian bank Fineco, it parses both xls files available for private accounts"""
 
+    defaultsPath = os.path.join(Path(__file__).parent, "config", "defaults.ini")
+
+    def config_parser(self, parser: "FinecoStatementParser") -> "FinecoStatementParser":
+        """Configure parser with the current settings or from defaults.ini"""
+
+        defaults = configuration.read(self.defaultsPath)
+        if not defaults:
+            self.ui.error("Unable to load the default configuration")
+            return parser
+
+        parser.tpl = {"savings": {}, "cards": {}}
+
+        for option in defaults["fineco"]:
+            if option == "plugin":
+                continue
+
+            default_value = defaults.get("fineco", option)
+
+            # Handle dotted notation for templates
+            if option.startswith(("savings.", "cards.")):
+                section, key = option.split(".", 1)
+                value = self.settings.get(option, default_value)
+
+                if value.startswith("["):
+                    parser.tpl[section][key] = json.loads(value)  # type: ignore
+                else:
+                    parser.tpl[section][key] = (  # type: ignore
+                        int(value)
+                        if str(value).isdigit()
+                        else (value.strip('"') if value.startswith('"') else value)
+                    )
+            else:
+                # Handle basic settings
+                value = self.settings.get(option, default_value)
+                if value.startswith("["):
+                    parsed_value = json.loads(value)
+                elif value.lower() in ("true", "false"):
+                    parsed_value = value.lower() == "true"
+                else:
+                    parsed_value = (
+                        int(value)
+                        if str(value).isdigit()
+                        else (value.strip('"') if value.startswith('"') else value)
+                    )
+
+                if hasattr(parser, option):
+                    setattr(parser, option, parsed_value)
+                else:
+                    self.ui.warning(
+                        f"Unknown configuration option: {option}. Ignoring it."
+                    )
+
+        return parser
+
     def get_parser(self, filename: str) -> "FinecoStatementParser":
-        return FinecoStatementParser(filename)
+        return self.config_parser(FinecoStatementParser(filename))
 
 
 class FinecoStatementParser(StatementParser[str]):
 
-    # HomeBank import payee/<NAME> in its description field, that can be used by assignement rules
-    memo2payee = True
-    date_format = "%d/%m/%Y"
-    bank_id = "FinecoBank"
-    currency = "EUR"
-    tpl = {
-        "savings": {
-            "th": [
-                "Data",
-                "Entrate",
-                "Uscite",
-                "Descrizione",
-                "Descrizione_Completa",
-                "Stato",
-            ],
-            "account_id_pos": [0, 0],
-            "account_id_str": "Conto Corrente: ",
-            "xfer_str": "Bonifico ",
-            "cash_str": "Prelievo Bancomat",
-            "extra_field": "Moneymap",
-        },
-        "cards": {
-            "th": [
-                "Intestatario carta",
-                "Numero carta",
-                "Data operazione",
-                "Data registrazione",
-                "Descrizione",
-                "Stato operazione",
-                "Tipo operazione",
-                "Circuito",
-                "Tipo rimborso",
-                "Importo",
-            ],
-            "amount_field": 9,
-            "account_id_pos": [3, 2],
-            "account_id_str": " **** **** ",
-        },
-    }
-    common_footer_marker = "Totale"
-    th_separator_idx = 0
-    cur_tpl = "savings"
-    extra_field = False
-
     def __init__(self, filename: str) -> None:
         super().__init__()
         self.filename = filename
+
+        # Initialize all the configurable attr to prevent AttributeError
+        self.tpl: TemplateDict = {"savings": {}, "cards": {}}
+        self.memo2payee: bool = False
+        self.date_format: str = ""
+        self.bank_id: str = ""
+        self.currency: str = ""
+        self.common_footer_marker: str = ""
+
+        self.th_separator_idx: int = 0
+        self.cur_tpl: str = "savings"
+        self.extra_field: bool = False
 
     def parse(self) -> statement.Statement:
         """Main entry point for parsers
@@ -84,10 +109,8 @@ class FinecoStatementParser(StatementParser[str]):
                 break
 
         for rowidx in range(sheet.nrows):
-            if first_col_empty:
-                row = sheet.row_values(rowidx, 1)
-            else:
-                row = sheet.row_values(rowidx)
+
+            row = sheet.row_values(rowidx, 1 if first_col_empty else 0)
 
             # issue #5 and #3: dates might be formatted as excel dates (floats) rather than strings
             if type(row[0]) is float:  # savings tpl
@@ -108,16 +131,16 @@ class FinecoStatementParser(StatementParser[str]):
 
             # guess sheet tpl type
             for name, tpl in self.tpl.items():
-                if row[0] == tpl["th"][0]:
+                if row[0] == tpl["th"][0]:  # type: ignore
                     self.th_separator_idx = rowidx
                     self.cur_tpl = name
 
         # issue #1: check if the file has the "Money Map" extra field
         if (
-            "extra_field" in self.tpl[self.cur_tpl]
-            and heading[-1][-1] == self.tpl[self.cur_tpl]["extra_field"]
+            "extra_field" in self.tpl[self.cur_tpl]  # type: ignore
+            and heading[-1][-1] == self.tpl[self.cur_tpl]["extra_field"]  # type: ignore
         ):
-            self.tpl[self.cur_tpl]["th"].append(self.tpl[self.cur_tpl]["extra_field"])
+            self.tpl[self.cur_tpl]["th"].append(self.tpl[self.cur_tpl]["extra_field"])  # type: ignore
             self.extra_field = True
 
         # issue #2: some cards statements could miss "Tipo Spesa" and "Tipo Rimborso" columns
@@ -129,10 +152,10 @@ class FinecoStatementParser(StatementParser[str]):
 
         self.validate(heading)
 
-        row = self.tpl[self.cur_tpl]["account_id_pos"][0]
-        col = self.tpl[self.cur_tpl]["account_id_pos"][1]
+        row = self.tpl[self.cur_tpl]["account_id_pos"][0]  # type: ignore
+        col = self.tpl[self.cur_tpl]["account_id_pos"][1]  # type: ignore
         account_id = sheet.cell_value(row, col).replace(
-            self.tpl[self.cur_tpl]["account_id_str"], ""
+            self.tpl[self.cur_tpl]["account_id_str"], ""  # type: ignore
         )
 
         self.statement = statement.Statement(
@@ -199,24 +222,23 @@ class FinecoStatementParser(StatementParser[str]):
         """Parse given transaction line and return StatementLine object"""
         stmt_line = statement.StatementLine()
 
-        if self.cur_tpl == "savings" or self.cur_tpl == "savings_legacy":
-            col_shift = 1 if self.cur_tpl == "savings_legacy" else 0
-            if row[1 + col_shift]:
-                income = row[1 + col_shift]
+        if self.cur_tpl == "savings":
+            if row[1]:
+                income = int(row[1])
                 outcome = 0
                 stmt_line.trntype = "CREDIT"
-            elif row[2 + col_shift]:
-                outcome = row[2 + col_shift]
+            elif row[2]:
+                outcome = int(row[2])
                 income = 0
                 stmt_line.trntype = "DEBIT"
 
-            memo_short = row[3 + col_shift]
+            memo_short = row[3]
             if memo_short.startswith(self.tpl["savings"]["xfer_str"]):
                 stmt_line.trntype = "XFER"
             elif memo_short.startswith(self.tpl["savings"]["cash_str"]):
                 stmt_line.trntype = "CASH"
 
-            stmt_line.memo = row[4 + col_shift].replace("°", ".")
+            stmt_line.memo = row[4].replace("°", ".")
             if self.extra_field and row[6] != "":
                 stmt_line.memo = stmt_line.memo + " - " + row[6]
 
@@ -227,13 +249,13 @@ class FinecoStatementParser(StatementParser[str]):
             if row[3] == "P":
                 stmt_line.trntype = "CASH"
 
-            if row[self.tpl["cards"]["amount_field"]] < 0:
+            if float(row[self.tpl["cards"]["amount_field"]]) < 0:
                 stmt_line.trntype = "DEBIT"
             else:
                 stmt_line.trntype = "CREDIT"
 
             stmt_line.memo = row[4].replace("°", ".")
-            stmt_line.amount = row[self.tpl["cards"]["amount_field"]]
+            stmt_line.amount = row[self.tpl["cards"]["amount_field"]]  # type: ignore
             stmt_line.date = datetime.strptime(row[2], self.date_format)
 
         if self.memo2payee:
