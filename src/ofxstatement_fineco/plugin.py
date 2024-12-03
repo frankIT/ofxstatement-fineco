@@ -18,7 +18,7 @@ class FinecoPlugin(Plugin):
     defaultsPath = os.path.join(Path(__file__).parent, "config", "defaults.ini")
 
     def config_parser(self, parser: "FinecoStatementParser") -> "FinecoStatementParser":
-        """Configure parser with the current settings or with those from defaults.ini"""
+        """Configure parser with the current settings or from defaults.ini"""
 
         defaults = configuration.read(self.defaultsPath)
         if not defaults:

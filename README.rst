@@ -32,6 +32,37 @@ install
 
     $ pip3 install ofxstatement-fineco
 
+configure
+-------
+No configuration is needed, but you can override the default constants either by ``ofxstatement edit-config``, or by specifing an analternate ini file at runtime with ``ofxstatement -c yourconfig.ini``
+This way, on top of having control over the few global settings, you can fix little templating mismatch if the Fineco statement files slightly changes over time.
+
+::
+
+    [fineco]
+    plugin = fineco
+
+    # Settings section
+    memo2payee = true
+    date_format = "%%d/%%m/%%Y"
+    bank_id = "FinecoBank"
+    currency = "EUR"
+    common_footer_marker = "Totale"
+
+    # Savings template
+    savings.th = ["Data", "Entrate", "Uscite", "Descrizione", "Descrizione_Completa", "Stato"]
+    savings.account_id_pos = [0, 0]
+    savings.account_id_str = "Conto Corrente: "
+    savings.xfer_str = "Bonifico "
+    savings.cash_str = "Prelievo Bancomat"
+    savings.extra_field = "Moneymap"
+
+    # Cards template
+    cards.th = ["Intestatario carta", "Numero carta", "Data operazione", "Data registrazione", "Descrizione", "Stato operazione", "Tipo operazione", "Circuito", "Tipo rimborso", "Importo"]
+    cards.account_id_pos = [3, 2]
+    cards.account_id_str = " **** **** "
+    cards.amount_field = 9
+
 about the parsing
 -----------------
 - A semi-unique id is generated for any transaction through a ofxstatement's native method.
