@@ -1,1 +1,2 @@
 include README.rst
+include src/ofxstatement_fineco/config/defaults.ini
