@@ -33,7 +33,7 @@ install
     $ pip3 install ofxstatement-fineco
 
 configure
--------
+---------
 No configuration is needed, but you can override the default constants either by ``ofxstatement edit-config``, or by specifing an analternate ini file at runtime with ``ofxstatement -c yourconfig.ini``
 This way, on top of having control over the few global settings, you can fix little templating mismatch if the Fineco statement files slightly changes over time.
 
