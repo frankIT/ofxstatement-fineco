@@ -223,24 +223,24 @@ class FinecoStatementParser(StatementParser[str]):
         stmt_line = statement.StatementLine()
 
         if self.cur_tpl == "savings":
-            if row[1]:
-                income = int(row[1])
+            if row[2]:
+                income = row[2]
                 outcome = 0
                 stmt_line.trntype = "CREDIT"
-            elif row[2]:
-                outcome = int(row[2])
+            elif row[3]:
+                outcome = row[3]
                 income = 0
                 stmt_line.trntype = "DEBIT"
 
-            memo_short = row[3]
+            memo_short = row[4]
             if memo_short.startswith(self.tpl["savings"]["xfer_str"]):
                 stmt_line.trntype = "XFER"
             elif memo_short.startswith(self.tpl["savings"]["cash_str"]):
                 stmt_line.trntype = "CASH"
 
-            stmt_line.memo = row[4].replace("°", ".")
-            if self.extra_field and row[6] != "":
-                stmt_line.memo = stmt_line.memo + " - " + row[6]
+            stmt_line.memo = row[5].replace("°", ".")
+            if self.extra_field and row[7] != "":
+                stmt_line.memo = stmt_line.memo + " - " + row[7]
 
             stmt_line.amount = self.calc_amount(income, outcome)
             stmt_line.date = datetime.strptime(row[0], self.date_format)
